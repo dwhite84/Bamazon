@@ -18,6 +18,9 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId);
+  console.log("\n--------------------------\n")
+  console.log("Welcome to Bamazon!")
+  console.log("\n--------------------------\n")
   allProducts();
 //   runSearch();
 });
