@@ -48,6 +48,7 @@ function allProducts() {
 
         }
           ]).then(function(input) {
+
             var item = input.items;
 
             var amount = input.amount; 
@@ -62,32 +63,29 @@ function allProducts() {
             if(amount <= product.stock_quantity){
                 console.log("Congrats, the prodct you requested is in stock!")
 
-            var update = "Update products SET stock_quantity =" + (product.stock_quantity - quantity) + "WHERE items =" + item;  
+            var update = "Update products SET stock_quantity =" + (product.stock_quantity - quantity) + "WHERE items =" + item; 
+            
+            connection.query(update, function(err,res){
+                if (err) throw err;
+
+                console.log("Your order has been placed! Your total is $" + product * quantity);
+                console.log("Thank you for shopping with us!")
+                console.log("\n-------------------------------------------------------------------------\n");
+
+                connection.end();
+            
+            })
+            } 
+            else {
+                console.log("Sorry, there is not enough product in stock, your order can not be placed as is");
+                console.log("Please change your order");
+                console.log("\n----------------------------------\n");
+
             }
 
-
-    
-       
             });
           });
       }
 
-      function nextQuestion() {
-        inquirer
-          .prompt({
-            name: "amount",
-            type: "input",
-            message: "How many would you like to order?"
-          })
-          .then(function(answer) {
-            var query = "SELECT stock_quantity, FROM bamazon_db WHERE ?";
-            connection.query(query, { amount: answer.amount }, function(err, res) {
-              for (var i = 0; i < res.length; i++) {
-                console.log("In sotck: " + res[i].stock_quantity );
-              }
-            
-            });
-          });
-      }
-
+   
     
