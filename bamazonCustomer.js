@@ -17,13 +17,38 @@ var connection = mysql.createConnection({
 
 connection.connect(function(err) {
   if (err) throw err;
-  console.log("connected as id " + connection.threadId);
-  console.log("\n--------------------------\n")
-  console.log("Welcome to Bamazon!")
-  console.log("\n--------------------------\n")
+  // console.log("connected as id " + connection.threadId);
+  // console.log("\n--------------------------\n")
+  // startPrompt();
   allProducts();
+ inventoryQuestion();
+  // allProducts();
 //   runSearch();
 });
+
+function startPrompt() {
+
+  inquirer.prompt([{
+
+      type: "confirm",
+      name: "confirm",
+      message: "Welcome to Bamazon! Would you like to view our inventory?",
+      default: true
+
+  }]).then(function(user) {
+      if (user.confirm === true) {
+        allProducts();
+        inventoryQuestion();
+
+        
+
+      } else {
+          console.log("Thank you! Come back soon!");
+      }
+  });
+ 
+}
+
 
 function allProducts() {
     connection.query("SELECT * FROM products", function(err, res) {
@@ -31,64 +56,91 @@ function allProducts() {
         console.log(res[i].id + " | " + res[i].product_name + " | " + res[i].department_name + " | " + res[i].price + "|" + res[i].stock_quantity);
       } 
       console.log("-----------------------------------");
-      runSearch();
+      // runSearch();
+      
     });
     
   } 
 
-    function runSearch() {
-        inquirer
-          .prompt([
+  function inventoryQuestion(inventory){
+    inquirer
+    .prompt([
+  {
+      type:"input",
+      name:"choice",
+      message: "Whats the ID number of the product you would like to purchase?",
+      
+     
+      // validate: function(value){
+      //   return !isNan(value) || value ==="a"; 
+      // }
+    }
+  ]).then(function(value){
+    var choiceID = parseInt(value.choice);
+    var item = allProducts(choiceID, inventory);
+
+    if(item){
+      quantityOnHand(item);
+    }
+    else{
+      console.log("This item is not avaiable");
+      allProducts();
+    }
+
+  });
+  }
+  
+ 
+  // function inventoryCheck (choiceID, inventory){
+  //   for(var i=0; i < inventory.length; i++){
+  //     if(inventory[i].id === choiceID){
+  //       return inventory[i];
+  //     }
+  //   }
+
+  //   return null;
+  // };
+
+  function quantityOnHand(){
+    inquirer
+      .prompt([
         {
-            name: "items",
-            type: "input",
-            message: "Whats the ID number of the product you would like to purchase?"
-          },
-        {
-            name: "amount",
-            type: "input",
-            message: "How many would you like to order?"
+          type:"input",
+          name: "quantity",
+          message:"How many would you like to order?",
+          validate: function(value){
+            return value > 0 
+          }
 
         }
-          ]).then(function(input) {
+      ]).then(function(value){
+        var quantity = parseInt(value.quantity);
 
-            var item = input.items;
+        if(quantity > product.stock_quantity){
+          console.log("Not in stock");
+          allProducts();
+        }
+        else{
+          purchase();
+        }
+      })
+  }
 
-            var amount = input.amount; 
 
-            var query = "SELECT * FROM products, WHERE ?";
+            function purchase (product,quantity){
+              connection.query( 
+                "Update products SET stock_quantity = stock_quantity - ? WHERE id = ?",
+                [quantity, product.id],
 
-            connection.query(query, { items: item }, function(err, res) {
-                if(err) throw err;
-            
-            var product = res[0];   
-            
-            if(amount <= product.stock_quantity){
-                console.log("Congrats, the prodct you requested is in stock!")
-
-            var update = "Update products SET stock_quantity =" + (product.stock_quantity - quantity) + "WHERE items =" + item; 
-            
-            connection.query(update, function(err,res){
-                if (err) throw err;
-
-                console.log("Your order has been placed! Your total is $" + product * quantity);
-                console.log("Thank you for shopping with us!")
-                console.log("\n-------------------------------------------------------------------------\n");
-
-                connection.end();
-            
-            })
-            } 
-            else {
-                console.log("Sorry, there is not enough product in stock, your order can not be placed as is");
-                console.log("Please change your order");
-                console.log("\n----------------------------------\n");
+                function(err,res){
+                  console.log("\nItem Purchased" + quantity + "" + product.product_name)
+                  allProducts();
+                }
+              );
 
             }
 
-            });
-          });
-      }
 
+    
    
     
